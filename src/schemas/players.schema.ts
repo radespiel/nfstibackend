@@ -5,8 +5,17 @@ export type PlayerDocument = Player & Document;
 
 @Schema()
 export class Player {
-  @Prop()
+  @Prop({unique: true})
   name: string;
+
+  @Prop({})
+  org: string;
+
+  @Prop({})
+  value: number;
+
+  @Prop({})
+  lastpontuation: number;
 
 }
 

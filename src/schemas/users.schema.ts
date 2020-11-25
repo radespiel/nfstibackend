@@ -9,14 +9,17 @@ export class User {
   @Prop({required: true})
   name: string;
 
-  @Prop({required: true})
+  @Prop({required: true, unique: true})
   email: string;
 
   @Prop({required: true})
   password: string;
   
   @Prop({required: true})
-  bday: string;
+  bday: Date;
+
+  @Prop({default: 100})
+  money: number
 
   @Prop({ type: [Types.ObjectId], ref: Player.name })
   players: Player[];

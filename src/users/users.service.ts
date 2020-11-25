@@ -16,4 +16,10 @@ export class UsersService {
   async findAll(): Promise<User[]> {
     return this.UserModel.find().exec();
   }
+
+  async searchMySquad(logedEmail): Promise<User>{
+    const x =  await await this.UserModel.findOne({ email: logedEmail }).populate("players").exec();
+    console.log("players", x.players)
+    return x
+  }
 }
