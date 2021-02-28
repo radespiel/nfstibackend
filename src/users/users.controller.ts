@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { User } from '../schemas/users.schema';
 import * as bcrypt from 'bcrypt';
 import MongoExceptionFilter from '../filters/mongo.exception.filter'
-//import { AuthenticationGuard } from '../guards/authentication.guard';
+import { AuthenticationGuard } from 'src/guards/authentication.guard';
 
 
 @Controller('users')
@@ -24,8 +24,9 @@ export class UsersController {
   } 
 
   @Get("mysquad")
+  @UseGuards(AuthenticationGuard)
   @UseFilters(MongoExceptionFilter)
-  async returnMysquad(@Req() request: Request): Promise<User> {
+  async returnMysquad(@Req() request: Request){
   const logedUserData = request["user"];
   return await this.usersService.searchMySquad(logedUserData.email);
   } 

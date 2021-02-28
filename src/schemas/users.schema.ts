@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { mongoose } from '@typegoose/typegoose';
 import { Document, Types } from 'mongoose';
 import {Player} from './players.schema'
 
@@ -21,10 +22,12 @@ export class User {
   @Prop({default: 100})
   money: number
 
-  @Prop({ type: [Types.ObjectId], ref: Player.name })
+  @Prop([{ required: false, type: mongoose.Schema.Types.ObjectId, ref: 'Player', validate: [arrayLimit, '{PATH} exceeds the limit of 5'] }])
   players: Player[];
 }
 
-
+function arrayLimit(val) {
+  return val.length <= 5;
+}
 
 export const UserSchema = SchemaFactory.createForClass(User);
