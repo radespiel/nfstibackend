@@ -8,7 +8,19 @@ import MongoExceptionFilter from '../filters/mongo.exception.filter'
 export class NotasController {
   constructor(private readonly notasService: NotasService) { }
 
-  @Post()
+  @Post("login")
+  @UseFilters(MongoExceptionFilter)
+  async login(@Body() data){
+    return await this.notasService.login(data);
+  }
+
+  @Post("lancatriare")
+  @UseFilters(MongoExceptionFilter)
+  async lancatriare(@Body() nota) {
+    return await this.notasService.lancatriare(nota);
+  }
+  
+  @Post("lancanfsti")
   @UseFilters(MongoExceptionFilter)
   async create(@Body() nota: Nota): Promise<Nota> {
     return await this.notasService.create(nota);
