@@ -5,6 +5,7 @@ import { Nota, NotaDocument } from '../schemas/notas.schema';
 import fs = require('fs');
 import axios from "axios";
 import FormData = require('form-data');
+import { create } from 'domain';
 
 
 @Injectable()
@@ -25,20 +26,72 @@ export class NotasService {
         "PHPSESSID": res.headers["set-cookie"].toString().slice(10,36),
         "cookieLogin": data.login
       }
-      console.log(success)
       return;
     })
     .catch((er) => {
-      console.log("erro")
         return;
       })
-    console.log("sucesso de fora",success)
     return success;
   }
   
   async lancatriare(data) {
-    console.log("entrei no lanca triare")
-    let success = {}
+
+////////////////////////////////////////////////////////////////////////////////////////// salva dados no processo do triare
+    async function salvaprocesso(infodevolvida){
+      function convertDate(dateString){
+        var p = dateString.split(/\D/g)
+        return [p[2],p[1],p[0] ].join("-")
+      }
+      data.vencimentoformatada = convertDate(data.vencimento);
+      data.vencimentoformatada = data.vencimento.replace(/-/g,'/')
+      const formData = new FormData();
+      formData.append('id', infodevolvida.id);
+      formData.append('processo_tarefa_id', infodevolvida.id);
+      formData.append('amb_tarefa_id', infodevolvida.id);
+      formData.append('modelo_versao_id', infodevolvida.modelo_versao_id);
+      formData.append('tarefa_id', infodevolvida.tarefa_id);
+      formData.append('processo_id', infodevolvida.processo_id);
+      formData.append('amb_processo_id', infodevolvida.processo_id);
+      formData.append('cod_execucao', 1);
+      formData.append('salvar', 1);
+      formData.append('btn_acionado', 0);
+      formData.append('ide_tipo_tarefa', "I");
+      formData.append('amb_link', "https://tiliflow.tiliweb.com.br/");
+      formData.append('fornecedor', data.fornecedor);
+      formData.append('cnpj', data.cnpj);
+      formData.append('numero_nota', data.numero);
+      formData.append('serie', data.serie);
+      formData.append('valor_total', data.valor);
+      formData.append('data_venc', data.vencimentoformatada);
+      formData.append('cer', data.cer);
+      formData.append('receb_fisico', data.receb);
+      formData.append('observacao', data.obs);
+      formData.append('desc_conta', data.carimbo);
+      formData.append('anexo_nota', '');
+      formData.append('label_anexo_nota', '');
+
+      let headerscomplete = formData.getHeaders()
+      headerscomplete = {
+        ...headerscomplete,
+        'cookie': "PHPSESSID="+data.PHPSESSID
+      }
+      await axios.post(`https://tiliflow.tiliweb.com.br/sistema/ProcessoMan.php?area=Painel&acao=G&alerta_salvar=on`, formData, {
+        headers: headerscomplete
+    })
+      .then(res => {
+        data = {
+          ...data,
+          triare: infodevolvida.processo_id        
+        }
+        return;
+      })
+      .catch((er) => {
+      alert("algo deu errado!")
+          return;
+        })
+    }
+/////////////////////////////////////////////////////////// CRIA O PROCESSO NO TRIARE
+    let infodevolvida = {}
     const formData = new FormData();
     formData.append('request', 1);
     let headerscomplete = formData.getHeaders()
@@ -46,31 +99,37 @@ export class NotasService {
       ...headerscomplete,
       'cookie': "PHPSESSID="+data.PHPSESSID
     }
-    console.log(headerscomplete)
     await axios.post(`https://tiliflow.tiliweb.com.br/sistema/ProcessoCad.php?modelo_versao_id=0043001&tarefa_id=00430010001&cod_execucao=1`, formData, {
       headers: headerscomplete
   })
     .then(res => {
+      infodevolvida = {
+      id: res.data.split('processo_tarefa_id=').pop().split('&')[0],
+      processo_id: res.data.split('processo_id=').pop().split('&')[0],
+      modelo_versao_id: res.data.split('modelo_versao_id=').pop().split('&')[0],
+      tarefa_id: res.data.split('tarefa_id=').pop().split('&')[0]
+      }
+      data = {
+        ...data,
+        triare: infodevolvida["processo_id"]
+      }
+      salvaprocesso(infodevolvida);///////////////////////////////////////////////////////Envia infos para o salva processo
       return;
     })
     .catch((er) => {
-      console.log("erro")
+    alert("algo deu errado!")
         return;
       })
-    console.log("sucesso de fora",success)
-    return success;
-  } 
-
-  async create(createNota): Promise<Nota> {
-    let base64Pdf = createNota.anexopdf.split(';base64,').pop();
-    let type = "pdf"
-    let newFileName = `${createNota.fornecedor} ${createNota.numero}.${type}`;
-      const file = await fs.writeFile('./anexos/' + newFileName, base64Pdf, { encoding: 'base64' }, function (err) {
-      });
-
-    createNota.anexo = `localhost:3001/notas/anexos/${newFileName}`;
-    const createdUser = new this.NotaModel(createNota);
-    return await createdUser.save();
+/////////////////////////////////////////////////////////// LANÇA NO MONGODB
+      let base64Pdf = data.anexopdf.split(';base64,').pop();
+      let type = "pdf"
+      let newFileName = `${data.fornecedor} ${data.numero}.${type}`;
+        const file = await fs.writeFile('./anexos/' + newFileName, base64Pdf, { encoding: 'base64' }, function (err) {
+        });
+  
+      data.anexo = `/notas/anexos/${newFileName}`;
+      const createdUser = new this.NotaModel(data);
+      return await createdUser.save();
   }
 
   async getNotas(nota){

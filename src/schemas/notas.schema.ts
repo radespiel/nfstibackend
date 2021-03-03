@@ -29,10 +29,13 @@ export class Nota {
   serie: number;
 
   @Prop({required: true})
+  valor: number;
+
+  @Prop({required: true})
   temoc: boolean;
 
   @Prop({required: true})
-  temcer: boolean;
+  cer: string;
 
   @Prop({required: true})
   obs: string;

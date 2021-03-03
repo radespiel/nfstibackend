@@ -19,12 +19,6 @@ export class NotasController {
   async lancatriare(@Body() nota) {
     return await this.notasService.lancatriare(nota);
   }
-  
-  @Post("lancanfsti")
-  @UseFilters(MongoExceptionFilter)
-  async create(@Body() nota: Nota): Promise<Nota> {
-    return await this.notasService.create(nota);
-  }
 
   @Get("/:numero")
   async getNotas(@Req() request: Request,
